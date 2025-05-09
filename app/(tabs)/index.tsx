@@ -1,75 +1,174 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import placeholder from "../../assets/images/placeholderTree.png";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function HomeScreen(): JSX.Element {
+  const [image, setImage] = useState<string | null>(null);
 
-export default function HomeScreen() {
+  const uploadImage = async (mode) => {
+    console.log("pressed !");
+    try {
+      let result;
+      if (mode === "gallery") {
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        });
+      } else {
+        await ImagePicker.requestCameraPermissionsAsync();
+        result = await ImagePicker.launchCameraAsync({
+          cameraType: ImagePicker.CameraType.back,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        });
+      }
+
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+        console.log("Image URI:", result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  const removeImage = () => setImage(null);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
+    <View style={styles.container}>
+      <Text style={styles.title}>🌳 Check Your Tree's Health</Text>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => uploadImage("")}
+        >
+          <Text style={styles.buttonText}>📷 Use Camera</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => uploadImage("gallery")}
+        >
+          <Text style={styles.buttonText}>🖼️ Choose from Gallery</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.imageContainer}>
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+          source={image ? { uri: image } : placeholder}
+          style={styles.image}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+        {image && (
+          <TouchableOpacity style={styles.deleteButton} onPress={removeImage}>
+            <Text style={styles.deleteText}>🗑️ Delete Image</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <TouchableOpacity style={styles.analyzeButton}>
+        <Text style={styles.analyzeText}>🔍 Analyze Tree</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.feedbackText}>📝 Feedback will appear here</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    flex: 1,
+    backgroundColor: "#f9f9f9",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 30,
+    textAlign: "center",
+    color: "#2e2e2e",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 30,
+  },
+  primaryButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  secondaryButton: {
+    backgroundColor: "#2196F3",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  image: {
+    height: 240,
+    width: 240,
+    borderRadius: 12,
+    resizeMode: "cover",
+    marginBottom: 10,
+  },
+  deleteButton: {
+    backgroundColor: "#f44336",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  deleteText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  analyzeButton: {
+    backgroundColor: "#673AB7",
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  analyzeText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  feedbackText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontStyle: "italic",
+    textAlign: "center",
+    color: "#666",
   },
 });
